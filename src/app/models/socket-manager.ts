@@ -6,7 +6,7 @@ import {
   Subject,
   timeout,
 } from 'rxjs';
-import { Message, SubscriptionMessage } from './message.models';
+import { Message, SubscriptionMessage } from './types/message.models';
 
 export class SocketManager<T = Message> {
   // probably need a way to clean this up too.
@@ -34,7 +34,6 @@ export class SocketManager<T = Message> {
     this.socket.onmessage = (event) => {
       const res = JSON.parse(event.data);
       const { type } = res;
-
       this.lastMessage$.next(res);
       this.eventTypes[type] = true;
     };
@@ -51,6 +50,7 @@ export class SocketManager<T = Message> {
           timeout(1500),
           catchError((error) => {
             reject(error);
+
             return [];
           }),
           first()
@@ -64,6 +64,7 @@ export class SocketManager<T = Message> {
             };
             this.socket.send(JSON.stringify(msg));
             this.activeSubscriptions.push(msg);
+
             resolve(this.activeSubscriptions);
           } catch (error) {
             reject(error);

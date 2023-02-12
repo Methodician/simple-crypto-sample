@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
-import { MatchMessage } from 'src/app/models/message.models';
-import { SocketManager } from 'src/app/models/socket-manager';
+import { SLTrades } from 'src/app/models/sltrades';
+
+import { CoinbaseService } from 'src/app/services/coinbase.service';
 
 @Component({
   selector: 'app-home',
@@ -8,18 +9,17 @@ import { SocketManager } from 'src/app/models/socket-manager';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  socketManager = new SocketManager<MatchMessage>(
-    'wss://ws-feed.exchange.coinbase.com'
-  );
-  constructor() {
-    this.testMatchSubscription();
+  solUsdTrades = new SLTrades(this.coinbaseService, 'SOL-USD', 2000, 7, 40);
+  historyIds = () => this.solUsdTrades.trades.map((trade) => trade.tradeId);
+  constructor(private coinbaseService: CoinbaseService) {
+    this.testProductTrades();
   }
 
-  testMatchSubscription = async () => {
-    console.log('testing match subscription');
-    const subscriptions = await this.socketManager.addMatchSubscription([
-      'SOL-USD',
-    ]);
-    console.log('active subscriptions', JSON.stringify(subscriptions, null, 2));
+  ngOnDestroy() {
+    this.solUsdTrades.destroy();
+  }
+
+  testProductTrades = async () => {
+    console.log('testing product trades');
   };
 }
