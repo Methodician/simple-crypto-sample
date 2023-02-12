@@ -1,0 +1,15 @@
+.horizontal {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  .vertical {
+    display: flex;
+    flex-direction: column;
+    max-height: 800px;
+
+    .testing-data {
+      overflow-y: scroll;
+    }
+  }
+}
