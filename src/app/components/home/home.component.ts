@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { MatchMessage } from 'src/app/models/message.models';
-import { SocketService } from 'src/app/services/socket.service';
+import { SocketManager } from 'src/app/models/socket-manager';
 
 @Component({
   selector: 'app-home',
@@ -8,16 +8,18 @@ import { SocketService } from 'src/app/services/socket.service';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  socketManager = this.socketSvc.createSocketManager<MatchMessage>();
-  constructor(private socketSvc: SocketService) {
-    this.socketManager.addMatchSubscription(['SOL-USD']);
-    console.log(
-      'active subscriptions',
-      JSON.stringify(this.socketManager.activeSubscriptions, null, 2)
-    );
-
-    this.socketManager.lastMessage$.subscribe((msg) => {
-      console.log('last message', msg);
-    });
+  socketManager = new SocketManager<MatchMessage>(
+    'wss://ws-feed.exchange.coinbase.com'
+  );
+  constructor() {
+    this.testMatchSubscription();
   }
+
+  testMatchSubscription = async () => {
+    console.log('testing match subscription');
+    const subscriptions = await this.socketManager.addMatchSubscription([
+      'SOL-USD',
+    ]);
+    console.log('active subscriptions', JSON.stringify(subscriptions, null, 2));
+  };
 }
