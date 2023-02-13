@@ -9,7 +9,7 @@ import { CoinbaseService } from 'src/app/services/coinbase.service';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  solUsdTrades = new SLTrades(this.coinbaseService, 'SOL-USD', 2000, 7, 40);
+  solUsdTrades = new SLTrades(this.coinbaseService, 'SOL-USD', 2000, 7, 8);
   historyIds = () => this.solUsdTrades.trades.map((trade) => trade.tradeId);
   constructor(private coinbaseService: CoinbaseService) {
     this.testProductTrades();

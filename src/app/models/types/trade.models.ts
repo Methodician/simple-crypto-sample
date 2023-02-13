@@ -20,11 +20,3 @@ export interface SLTrade {
   side: 'buy' | 'sell';
   date: Date;
 }
-
-const exampleRestTrade = {
-  time: '2023-02-12T18:41:20.319659Z',
-  trade_id: 82205637,
-  price: '22.18000000',
-  size: '6.00200000',
-  side: 'sell',
-};

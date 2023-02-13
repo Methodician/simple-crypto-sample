@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { filter, map, Subject } from 'rxjs';
+import { filter, from, map, Subject } from 'rxjs';
 import processTrade from '../helpers/process-trade';
 import { SocketManager } from '../models/socket-manager';
 import { MatchMessage } from '../models/types/message.models';
@@ -17,23 +17,22 @@ const tradesUrl = (productId: string) =>
 export class CoinbaseService {
   constructor() {}
 
-  private getProductTrades = async (productId: string) => {
+  // Raw rest API call returning RestResponseTrade[]
+  getProductTrades = async (productId: string) => {
     const url = tradesUrl(productId);
     const res = await fetch(url);
 
     return res.json() as Promise<RestResponseTrade[]>;
   };
 
+  // just converts getProductTrades to an observable of SLTrade[]
   getProductTrades$ = (productId: string) => {
-    // just converts getProductTrades to an observable of SLTrade[]
-    const trades$ = new Subject<SLTrade[]>();
-    this.getProductTrades(productId).then((trades) => {
-      trades$.next(trades.map((trade) => processTrade(trade, productId)));
-    });
-
-    return trades$;
+    return from(this.getProductTrades(productId)).pipe(
+      map((trades) => trades.map((trade) => processTrade(trade, productId)))
+    );
   };
 
+  // Provides a stream of SLTrade[] from the socket
   streamProductTrades$ = (productId: string) => {
     const manager = new SocketManager<MatchMessage>(FEED_URL);
     manager.addMatchSubscription([productId]);
