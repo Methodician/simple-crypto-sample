@@ -88,7 +88,7 @@ export class SLTrades {
   private handoff = () => {
     // Avoid duplicates
     let trades = [
-      ...new Set([...this.restTrades, ...this.socketTrades]),
+      ...new Set([...this.socketTrades, ...this.restTrades]),
     ].reverse();
     if (!this.maxHistory) {
       this.tradeHistory$.next(trades);

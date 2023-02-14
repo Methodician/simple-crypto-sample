@@ -10,9 +10,10 @@ import { GuideComponent } from './components/guide/guide.component';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { SignalEffects } from './state/signal.effects';
 import { reducers } from './state';
+import { ReverseArrayPipe } from './reverse-array.pipe';
 
 @NgModule({
-  declarations: [AppComponent, HomeComponent, GuideComponent],
+  declarations: [AppComponent, HomeComponent, GuideComponent, ReverseArrayPipe],
   imports: [
     BrowserModule,
     AppRoutingModule,

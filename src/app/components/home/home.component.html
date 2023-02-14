@@ -1,12 +1,27 @@
 <h1>Just Testing...</h1>
 <section class="horizontal">
   <div class="vertical">
-    <h3>Last Trade</h3>
+    <h2>Signals</h2>
+    <h3>SMA</h3>
+    <pre>{{ sma$ | async | json }}</pre>
+    <h3>Bollinger Bands</h3>
+    <pre>{{ bollingerBands$ | async | json }}</pre>
+
+    <h2>Last Trade</h2>
     <pre>{{ lastTrade$ | async | json }}</pre>
   </div>
 
   <div class="vertical">
-    <h3>History (store)</h3>
-    <pre>{{ trades$ | async | json }}</pre>
+    <h2>Candles</h2>
+    <pre class="testing-data">{{
+      (candles$ | async)?.slice()?.reverse() | json
+    }}</pre>
+  </div>
+
+  <div class="vertical">
+    <h2>Trade History</h2>
+    <pre class="testing-data">{{
+      (trades$ | async)?.slice()?.reverse() | json
+    }}</pre>
   </div>
 </section>

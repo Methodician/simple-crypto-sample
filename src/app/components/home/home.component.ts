@@ -9,7 +9,10 @@ import {
   removeTradeSubscription,
 } from 'src/app/state/signal.actions';
 import {
+  selectBollingerBands,
   selectLastTrade,
+  selectMinuteCandles,
+  selectSma,
   selectTradeHistory,
 } from 'src/app/state/signal.selectors';
 
@@ -20,21 +23,24 @@ import {
 })
 export class HomeComponent {
   lastTrade$ = this.store.select(selectLastTrade('SOL-USD'));
-  trades$ = this.store
-    .select(selectTradeHistory('SOL-USD'))
-    .pipe(map((trades) => trades?.map((trade) => trade.tradeId)));
+  trades$ = this.store.select(selectTradeHistory('SOL-USD'));
+  candles$ = this.store.select(selectMinuteCandles('SOL-USD'));
+  // .pipe(map((trades) => trades?.map((trade) => trade.tradeId)));
+  sma$ = this.store
+    .select(selectSma('SOL-USD', 7))
+    .pipe(map((sma) => sma?.getResult()));
+  bollingerBands$ = this.store
+    .select(selectBollingerBands('SOL-USD', 7))
+    .pipe(map((bb) => bb?.getResult()));
 
   constructor(private store: Store) {
-    this.testProductTrades();
+    this.store.dispatch(
+      // addTradeSubscription({ productId: 'SOL-USD', maxHistory: 100 })
+      addTradeSubscription({ productId: 'SOL-USD' })
+    );
   }
 
   ngOnDestroy() {
     this.store.dispatch(removeTradeSubscription({ productId: 'SOL-USD' }));
   }
-
-  testProductTrades = () => {
-    console.log('testing product trades');
-
-    this.store.dispatch(addTradeSubscription({ productId: 'SOL-USD' }));
-  };
 }

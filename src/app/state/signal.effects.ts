@@ -27,13 +27,13 @@ export class SignalEffects {
   addTradeSubscription$ = createEffect(() =>
     this.actions$.pipe(
       ofType(addTradeSubscription),
-      switchMap(({ productId }) => {
+      switchMap(({ productId, maxHistory }) => {
         const slTrades = new SLTrades(
           this.coinbaseService,
           productId,
           2000,
           7,
-          8
+          maxHistory
         );
 
         this.slTradesRecord[productId] = slTrades;

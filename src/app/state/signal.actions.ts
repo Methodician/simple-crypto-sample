@@ -3,7 +3,7 @@ import { SLTrade } from '../models/types/trade.models';
 
 export const addTradeSubscription = createAction(
   '[Signal] Add Trade Subscription',
-  props<{ productId: string }>()
+  props<{ productId: string; maxHistory?: number }>()
 );
 
 export const addTradeSubscriptionSuccess = createAction(
