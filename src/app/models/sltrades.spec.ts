@@ -131,7 +131,7 @@ describe('SLTrades', () => {
   });
 
   it('should have correct initial values', () => {
-    expect(slTrades.trades).toEqual([]);
+    expect(slTrades.tradeHistory$.value).toEqual([]);
     expect(slTrades.maxHistory).toEqual(5);
     expect(slTrades.cooldown).toEqual(100);
     expect(slTrades.productId).toEqual('productId');
@@ -148,13 +148,13 @@ describe('SLTrades', () => {
         expect(trade.tradeId).toEqual(82219876);
       });
       if (isReady) {
-        expect(slTrades.trades.length).toEqual(5);
+        expect(slTrades.tradeHistory$.value.length).toEqual(5);
       }
     });
   });
 
   it('should clean up correctly', () => {
     slTrades.destroy();
-    expect(slTrades.trades).toEqual([]);
+    expect(slTrades.tradeHistory$.value).toEqual([]);
   });
 });

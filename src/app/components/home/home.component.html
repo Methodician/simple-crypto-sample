@@ -1,17 +1,12 @@
 <h1>Just Testing...</h1>
 <section class="horizontal">
   <div class="vertical">
-    <h3>Streamed</h3>
-    <pre>{{ solUsdTrades.lastTrade$ | async | json }}</pre>
-    <h3>Removed</h3>
-    <pre>{{ solUsdTrades.lastRemovedTrade$ | async | json }}</pre>
+    <h3>Last Trade</h3>
+    <pre>{{ lastTrade$ | async | json }}</pre>
   </div>
+
   <div class="vertical">
-    <h3>History</h3>
-    <pre>{{ solUsdTrades.trades | json }}</pre>
-  </div>
-  <div class="vertical">
-    <h3>History Ids</h3>
-    <pre>{{ historyIds() | json }}</pre>
+    <h3>History (store)</h3>
+    <pre>{{ trades$ | async | json }}</pre>
   </div>
 </section>

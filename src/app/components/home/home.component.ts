@@ -1,7 +1,17 @@
 import { Component } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { map, timer } from 'rxjs';
 import { SLTrades } from 'src/app/models/sltrades';
 
 import { CoinbaseService } from 'src/app/services/coinbase.service';
+import {
+  addTradeSubscription,
+  removeTradeSubscription,
+} from 'src/app/state/signal.actions';
+import {
+  selectLastTrade,
+  selectTradeHistory,
+} from 'src/app/state/signal.selectors';
 
 @Component({
   selector: 'app-home',
@@ -9,17 +19,22 @@ import { CoinbaseService } from 'src/app/services/coinbase.service';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  solUsdTrades = new SLTrades(this.coinbaseService, 'SOL-USD', 2000, 7, 8);
-  historyIds = () => this.solUsdTrades.trades.map((trade) => trade.tradeId);
-  constructor(private coinbaseService: CoinbaseService) {
+  lastTrade$ = this.store.select(selectLastTrade('SOL-USD'));
+  trades$ = this.store
+    .select(selectTradeHistory('SOL-USD'))
+    .pipe(map((trades) => trades?.map((trade) => trade.tradeId)));
+
+  constructor(private store: Store) {
     this.testProductTrades();
   }
 
   ngOnDestroy() {
-    this.solUsdTrades.destroy();
+    this.store.dispatch(removeTradeSubscription({ productId: 'SOL-USD' }));
   }
 
-  testProductTrades = async () => {
+  testProductTrades = () => {
     console.log('testing product trades');
+
+    this.store.dispatch(addTradeSubscription({ productId: 'SOL-USD' }));
   };
 }

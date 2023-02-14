@@ -1,11 +1,4 @@
-import {
-  BehaviorSubject,
-  catchError,
-  filter,
-  first,
-  Subject,
-  timeout,
-} from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, Subject } from 'rxjs';
 import { Message, SubscriptionMessage } from './types/message.models';
 
 export class SocketManager<T = Message> {
@@ -19,10 +12,16 @@ export class SocketManager<T = Message> {
   get url() {
     return this._url;
   }
+  // Tracking all event types received from the socket in case we need to
+  // filter them out later
   eventTypes: Record<string, boolean> = {};
-  isOpen$ = new BehaviorSubject<boolean>(false);
+  // Whether the socket is open or not
+  isOpen$ = new BehaviorSubject(false);
+  // Last error received from the socket
   lastError$ = new Subject<any>();
+  // Last message received from the socket
   lastMessage$ = new Subject<T>();
+  // All active subscriptions
   activeSubscriptions: SubscriptionMessage[] = [];
 
   constructor(feedUrl: string) {
@@ -39,36 +38,19 @@ export class SocketManager<T = Message> {
     };
   }
 
-  // probably need a way to clean this up too. Do we need to proactively unsubscribe sockets?
-  addMatchSubscription = (productIds: string[]) =>
-    // Promise conveniently verifies that everything went through and
-    // informs consumer of all active subscriptions
-    new Promise<SubscriptionMessage[]>((resolve, reject) => {
-      this.isOpen$
-        .pipe(
-          filter((isOpen) => isOpen),
-          timeout(1500),
-          catchError((error) => {
-            reject(error);
+  private sendMessage = async (message: Message) => {
+    await firstValueFrom(this.isOpen$.pipe(filter((isOpen) => isOpen)));
+    this.socket.send(JSON.stringify(message));
+  };
 
-            return [];
-          }),
-          first()
-        )
-        .subscribe(() => {
-          try {
-            const msg = {
-              type: 'subscribe' as 'subscribe', // appease TS which thought this was of type "string"
-              product_ids: productIds,
-              channels: ['matches'],
-            };
-            this.socket.send(JSON.stringify(msg));
-            this.activeSubscriptions.push(msg);
-
-            resolve(this.activeSubscriptions);
-          } catch (error) {
-            reject(error);
-          }
-        });
-    });
+  addMatchSubscription = async (productIds: string[]) => {
+    const message: SubscriptionMessage = {
+      type: 'subscribe',
+      product_ids: productIds,
+      channels: ['matches'],
+    };
+    await this.sendMessage(message);
+    this.activeSubscriptions.push(message);
+    return this.activeSubscriptions;
+  };
 }

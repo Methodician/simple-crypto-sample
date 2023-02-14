@@ -1,4 +1,11 @@
-import { Observable, Subject, takeUntil, takeWhile } from 'rxjs';
+import { cloneDeep } from 'lodash';
+import {
+  BehaviorSubject,
+  Observable,
+  Subject,
+  takeUntil,
+  takeWhile,
+} from 'rxjs';
 import { CoinbaseService } from '../services/coinbase.service';
 import { SLTrade } from './types/trade.models';
 
@@ -6,7 +13,7 @@ import { SLTrade } from './types/trade.models';
 export class SLTrades {
   isReady$ = new Subject<boolean>();
   // All of the trades being tracked
-  trades: SLTrade[] = [];
+  tradeHistory$ = new BehaviorSubject<SLTrade[]>([]);
   // The maximum number of trades to hold in memory
   maxHistory?: number;
   // The number of milliseconds to wait between retries
@@ -26,7 +33,8 @@ export class SLTrades {
   private destroy$ = new Subject<void>();
 
   constructor(
-    // Questionable design choice: this class depends on the CoinbaseService
+    // Questionable design choice: this class depends on the CoinbaseService.
+    // Smells a little backwards.
     private coinbaseSvc: CoinbaseService,
     productId: string,
     // hwo long to wait between retries
@@ -66,9 +74,10 @@ export class SLTrades {
     this.synchronizeHistoryAndStream();
   };
 
-  // a good start at clean-up logic
+  // a start at clean-up logic
   destroy = () => {
-    this.trades = [];
+    this.tradeHistory$.next([]);
+    this.tradeHistory$.complete();
     this.restTrades = [];
     this.socketTrades = [];
     this.destroy$.next();
@@ -82,11 +91,11 @@ export class SLTrades {
       ...new Set([...this.restTrades, ...this.socketTrades]),
     ].reverse();
     if (!this.maxHistory) {
-      this.trades = trades;
+      this.tradeHistory$.next(trades);
     } else {
-      this.trades = trades.slice(-this.maxHistory);
-      this.isReady$.next(true);
+      this.tradeHistory$.next(trades.slice(-this.maxHistory));
     }
+    this.isReady$.next(true);
     // Cleanup temporary storage
     this.restTrades = [];
     this.socketTrades = [];
@@ -95,10 +104,17 @@ export class SLTrades {
   // Keeps trades up to date and truncates to maxHistory if necessary
   private manageHistory = () => {
     this.lastTrade$.pipe(takeUntil(this.destroy$)).subscribe((trade) => {
-      if (!!this.maxHistory && this.trades.length >= this.maxHistory) {
-        this.lastRemovedTrade$.next(this.trades.shift()!);
+      let trades = cloneDeep(this.tradeHistory$.value);
+      if (
+        !!this.maxHistory &&
+        this.tradeHistory$.value.length >= this.maxHistory
+      ) {
+        // let trades = cloneDeep(this.tradeHistory);
+        this.lastRemovedTrade$.next(trades.shift()!);
       }
-      this.trades.push(trade);
+      trades.push(trade);
+      this.tradeHistory$.next(trades);
+      // this.tradeHistory.push(trade);
     });
   };
 
