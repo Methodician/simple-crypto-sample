@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { filter, from, map, Subject } from 'rxjs';
+import { from, map } from 'rxjs';
 import processTrade from '../helpers/process-trade';
 import { SocketManager } from '../models/socket-manager';
 import { MatchMessage } from '../models/types/message.models';
-import { RestResponseTrade, SLTrade } from '../models/types/trade.models';
+import { RestResponseTrade } from '../models/types/trade.models';
 const FEED_URL = 'wss://ws-feed.exchange.coinbase.com';
 const EXCHANGE_URL = 'https://api.exchange.coinbase.com';
 // It can be helpful to create a function that returns the URL for a given resource.
@@ -37,11 +37,6 @@ export class CoinbaseService {
     const manager = new SocketManager<MatchMessage>(FEED_URL);
     manager.addMatchSubscription([productId]);
 
-    return manager.lastMessage$.pipe(
-      filter(
-        (message) => message.type == 'last_match' || message.type == 'match'
-      ),
-      map((message) => processTrade(message, productId))
-    );
+    return manager;
   };
 }

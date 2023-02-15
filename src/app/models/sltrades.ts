@@ -1,12 +1,17 @@
 import { cloneDeep } from 'lodash';
 import {
   BehaviorSubject,
+  filter,
+  map,
   Observable,
   Subject,
   takeUntil,
   takeWhile,
 } from 'rxjs';
+import processTrade from '../helpers/process-trade';
 import { CoinbaseService } from '../services/coinbase.service';
+import { SocketManager } from './socket-manager';
+import { MatchMessage } from './types/message.models';
 import { SLTrade } from './types/trade.models';
 
 // Manages a set of recent trades for a given product
@@ -32,6 +37,8 @@ export class SLTrades {
   // nexting this signals class to clean up to minimize memory leaks
   private destroy$ = new Subject<void>();
 
+  private socketManager: SocketManager<MatchMessage>;
+
   constructor(
     // Questionable design choice: this class depends on the CoinbaseService.
     // Smells a little backwards.
@@ -49,14 +56,37 @@ export class SLTrades {
     this.productId = productId;
     this.maxRetries = maxRetries;
     this.maxHistory = maxHistory;
+    this.socketManager = this.coinbaseSvc.streamProductTrades$(this.productId);
     this.initialize();
   }
+
+  // a start at clean-up logic
+  destroy = () => {
+    this.tradeHistory$.next([]);
+    this.tradeHistory$.complete();
+    this.restTrades = [];
+    this.socketTrades = [];
+    this.destroy$.next();
+    this.destroy$.complete();
+    this.socketManager.destroy();
+  };
+
+  getSubscriptions = () => {
+    return [
+      ...this.socketManager.activeSubscriptions.map((sub) => sub.product_ids),
+    ];
+  };
 
   // Runs through set-up logic
   private initialize = () => {
     // Assigns the lastTrade$ observable to the socket stream
-    this.lastTrade$ = this.coinbaseSvc
-      .streamProductTrades$(this.productId)
+    this.lastTrade$ = this.socketManager.lastMessage$
+      .pipe(
+        filter(
+          (message) => message.type == 'last_match' || message.type == 'match'
+        ),
+        map((message) => processTrade(message, this.productId))
+      )
       .pipe(takeUntil(this.destroy$));
 
     // Begins tracking socket trades for sync up
@@ -72,16 +102,6 @@ export class SLTrades {
         this.socketTrades.push(trade);
       });
     this.synchronizeHistoryAndStream();
-  };
-
-  // a start at clean-up logic
-  destroy = () => {
-    this.tradeHistory$.next([]);
-    this.tradeHistory$.complete();
-    this.restTrades = [];
-    this.socketTrades = [];
-    this.destroy$.next();
-    this.destroy$.complete();
   };
 
   // Merge the rest and socket trades, then transfers to the trades array in reverse
@@ -109,12 +129,10 @@ export class SLTrades {
         !!this.maxHistory &&
         this.tradeHistory$.value.length >= this.maxHistory
       ) {
-        // let trades = cloneDeep(this.tradeHistory);
         this.lastRemovedTrade$.next(trades.shift()!);
       }
       trades.push(trade);
       this.tradeHistory$.next(trades);
-      // this.tradeHistory.push(trade);
     });
   };
 

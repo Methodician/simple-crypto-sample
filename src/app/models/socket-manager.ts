@@ -38,6 +38,11 @@ export class SocketManager<T = Message> {
     };
   }
 
+  destroy = () => {
+    this.socket.close();
+    this.activeSubscriptions = [];
+  };
+
   private sendMessage = async (message: Message) => {
     await firstValueFrom(this.isOpen$.pipe(filter((isOpen) => isOpen)));
     this.socket.send(JSON.stringify(message));

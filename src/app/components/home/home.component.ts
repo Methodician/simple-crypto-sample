@@ -1,9 +1,6 @@
 import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { map, timer } from 'rxjs';
-import { SLTrades } from 'src/app/models/sltrades';
-
-import { CoinbaseService } from 'src/app/services/coinbase.service';
+import { map } from 'rxjs';
 import {
   addTradeSubscription,
   removeTradeSubscription,
@@ -13,6 +10,7 @@ import {
   selectLastTrade,
   selectMinuteCandles,
   selectSma,
+  selectSubscribedProductIds,
   selectTradeHistory,
 } from 'src/app/state/signal.selectors';
 
@@ -22,25 +20,48 @@ import {
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  lastTrade$ = this.store.select(selectLastTrade('SOL-USD'));
-  trades$ = this.store.select(selectTradeHistory('SOL-USD'));
-  candles$ = this.store.select(selectMinuteCandles('SOL-USD'));
-  // .pipe(map((trades) => trades?.map((trade) => trade.tradeId)));
-  sma$ = this.store
-    .select(selectSma('SOL-USD', 7))
-    .pipe(map((sma) => sma?.getResult()));
-  bollingerBands$ = this.store
-    .select(selectBollingerBands('SOL-USD', 7))
-    .pipe(map((bb) => bb?.getResult()));
+  subscribedProductIds$ = this.store.select(selectSubscribedProductIds);
+
+  selectedProductId = '';
 
   constructor(private store: Store) {
+    // Just for demo
     this.store.dispatch(
-      // addTradeSubscription({ productId: 'SOL-USD', maxHistory: 100 })
-      addTradeSubscription({ productId: 'SOL-USD' })
+      addTradeSubscription({ productId: 'SOL-USD', maxHistory: 1000 })
     );
   }
 
   ngOnDestroy() {
     this.store.dispatch(removeTradeSubscription({ productId: 'SOL-USD' }));
   }
+
+  addTradeSubscription = () =>
+    this.store.dispatch(
+      addTradeSubscription({
+        productId: this.selectedProductId,
+        maxHistory: 400,
+      })
+    );
+
+  removeTradeSubscription = (productId: string) =>
+    this.store.dispatch(removeTradeSubscription({ productId }));
+
+  tradesByProductId$ = (productId: string) =>
+    this.store.select(selectTradeHistory(productId));
+
+  lastTradeByProductId$ = (productId: string) =>
+    this.store.select(selectLastTrade(productId));
+
+  candlesByProductId$ = (productId: string) =>
+    this.store.select(selectMinuteCandles(productId));
+
+  smaByProductId$ = (productId: string) =>
+    this.store
+      .select(selectSma(productId, 7))
+      .pipe(map((sma) => sma?.getResult()));
+
+  bollingerBandsByProductId$ = (productId: string) =>
+    this.store
+      .select(selectBollingerBands(productId, 7))
+      .pipe(map((bb) => bb?.getResult()));
 }

@@ -1,12 +1,11 @@
-import { Action, createReducer, on } from '@ngrx/store';
+import { createReducer, on } from '@ngrx/store';
 import { SLTrade } from '../models/types/trade.models';
 import {
   addTradeSubscriptionSuccess,
   onNewHistory,
   onNewTrade,
+  removeTradeSubscriptionSuccess,
 } from './signal.actions';
-// import cloneDeep from 'lodash/cloneDeep';
-import { cloneDeep } from 'lodash';
 export const signalFeatureKey = 'signal';
 
 export interface TradeMap {
@@ -18,11 +17,14 @@ export interface TradeMap {
   };
 }
 
+// May ultimately belong in multiple reducers
 export interface State {
+  subscribedProductIds: string[];
   trades: TradeMap;
 }
 
 export const initialState: State = {
+  subscribedProductIds: [],
   trades: {
     history: {},
     last: {},
@@ -34,6 +36,11 @@ export const reducer = createReducer(
   on(
     addTradeSubscriptionSuccess,
     (state, { lastTrade, tradeHistory: trades }) => ({
+      ...state,
+      subscribedProductIds: [
+        ...state.subscribedProductIds,
+        lastTrade.productId,
+      ],
       trades: {
         ...state.trades,
         history: {
@@ -47,7 +54,23 @@ export const reducer = createReducer(
       },
     })
   ),
+  on(removeTradeSubscriptionSuccess, (state, { productId }) => {
+    const { [productId]: _, ...newTrades } = state.trades.history;
+    const { [productId]: __, ...newLastTrades } = state.trades.last;
+    return {
+      ...state,
+      subscribedProductIds: state.subscribedProductIds.filter(
+        (id) => id !== productId
+      ),
+      trades: {
+        ...state.trades,
+        history: newTrades,
+        last: newLastTrades,
+      },
+    };
+  }),
   on(onNewTrade, (state, { lastTrade }) => ({
+    ...state,
     trades: {
       ...state.trades,
       last: {
@@ -57,6 +80,7 @@ export const reducer = createReducer(
     },
   })),
   on(onNewHistory, (state, { productId, tradeHistory }) => ({
+    ...state,
     trades: {
       ...state.trades,
       history: {

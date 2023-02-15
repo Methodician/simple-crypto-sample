@@ -8,6 +8,11 @@ import { State as SignalState, signalFeatureKey } from './signal.reducer';
 export const selectSignalState =
   createFeatureSelector<SignalState>(signalFeatureKey);
 
+export const selectSubscribedProductIds = createSelector(
+  selectSignalState,
+  (state) => state.subscribedProductIds
+);
+
 export const selectTradeHistory = (productId: string) =>
   createSelector(selectSignalState, (state) => state.trades.history[productId]);
 
@@ -86,9 +91,9 @@ export const selectMinuteCandles = (productId: string) =>
 export const selectSma = (productId: string, period: number) =>
   createSelector(selectMinuteCandles(productId), (candles) => {
     if (!candles) return null;
-    const sma = new SMA(period);
     // get the last few candles based on period
     const lastFewCandles = candles.slice(-period);
+    const sma = new SMA(Math.min(lastFewCandles.length, period));
     // add the last few candles to the sma
     lastFewCandles.forEach((candle) => sma.update(candle.close));
     return sma;
@@ -101,9 +106,14 @@ export const selectBollingerBands = (
 ) =>
   createSelector(selectMinuteCandles(productId), (candles) => {
     if (!candles) return null;
-    const bb = new BollingerBands(period, deviationMultiplier || 2);
+    const dm = deviationMultiplier || 2;
     // get the last few candles based on period
     const lastFewCandles = candles.slice(-(period + 1));
+    // create a new bollinger bands instance but avoid not having enough candles
+    const bb = new BollingerBands(
+      Math.min(lastFewCandles.length - 1, period),
+      dm
+    );
     // add the last few candles to the sma
     lastFewCandles.forEach((candle) => bb.update(candle.close));
     return bb;

@@ -1,27 +1,79 @@
-<h1>Just Testing...</h1>
-<section class="horizontal">
+<h1>Signal Processing Demo</h1>
+<mat-card class="ui">
+  <section class="vertical">
+    <h2>Add Subscription:</h2>
+    <mat-form-field class="product-id-input">
+      <mat-label>Product ID </mat-label>
+      <input
+        matInput
+        placeholder="e.g. ETH-USD"
+        [(ngModel)]="selectedProductId"
+      />
+    </mat-form-field>
+    <button mat-stroked-button (click)="addTradeSubscription()">Add</button>
+  </section>
+  <section class="vertical">
+    <h2>Active Subscriptions:</h2>
+    <mat-selection-list #subscriptions [multiple]="false">
+      <mat-list-option
+        *ngFor="let productId of subscribedProductIds$ | async"
+        [value]="productId"
+      >
+        <button mat-icon-button (click)="removeTradeSubscription(productId)">
+          <mat-icon>close</mat-icon>
+        </button>
+        {{ productId }}
+      </mat-list-option>
+    </mat-selection-list>
+  </section>
+</mat-card>
+<section class="horizontal" *ngIf="subscriptions.selectedOptions.hasValue()">
   <div class="vertical">
     <h2>Signals</h2>
     <h3>SMA</h3>
-    <pre>{{ sma$ | async | json }}</pre>
+    <pre>{{
+      smaByProductId$(subscriptions.selectedOptions.selected[0].value)
+        | async
+        | json
+    }}</pre>
     <h3>Bollinger Bands</h3>
-    <pre>{{ bollingerBands$ | async | json }}</pre>
+    <pre>{{
+      bollingerBandsByProductId$(
+        subscriptions.selectedOptions.selected[0].value
+      )
+        | async
+        | json
+    }}</pre>
 
     <h2>Last Trade</h2>
-    <pre>{{ lastTrade$ | async | json }}</pre>
+    <pre>{{
+      lastTradeByProductId$(subscriptions.selectedOptions.selected[0].value)
+        | async
+        | json
+    }}</pre>
   </div>
 
   <div class="vertical">
     <h2>Candles</h2>
     <pre class="testing-data">{{
-      (candles$ | async)?.slice()?.reverse() | json
+      (
+        candlesByProductId$(subscriptions.selectedOptions.selected[0].value)
+        | async
+      )
+        ?.slice()
+        ?.reverse() | json
     }}</pre>
   </div>
 
   <div class="vertical">
     <h2>Trade History</h2>
     <pre class="testing-data">{{
-      (trades$ | async)?.slice()?.reverse() | json
+      (
+        tradesByProductId$(subscriptions.selectedOptions.selected[0].value)
+        | async
+      )
+        ?.slice()
+        ?.reverse() | json
     }}</pre>
   </div>
 </section>
